@@ -1,20 +1,26 @@
 import express from "express";
 import morgan from "morgan";
-import resolver from "./src/resolver";
-import schema from "./src/schema";
-import { createHandler } from "graphql-http/lib/use/express";
+import schema from "./schema";
 const expressPlayground = require('graphql-playground-middleware-express')
   .default
 
+
+var { createHandler } = require("graphql-http/lib/use/express");
 const app: express.Application = express();
 const port = 3000;
 app.use(morgan("combined"));
+
+var root = {
+  hello: () => {
+    return "Hello world!";
+  },
+};
 
 app.all(
   "/graphql",
   createHandler({
     schema: schema,
-    rootValue: resolver,
+    rootValue: root,
   })
 );
 
