@@ -8,6 +8,16 @@ const expressPlayground = require('graphql-playground-middleware-express')
 
 const app: express.Application = express();
 const port = 3000;
+const Pool = require('pg').Pool
+const pool = new Pool({
+  user: 'myuser',
+  host: 'localhost',
+  database: 'mydatabase',
+  password: 'mypassword',
+  port: 5433,
+})
+
+app.use(express.json());
 app.use(morgan("combined"));
 
 app.all(
@@ -20,6 +30,26 @@ app.all(
 
 app.get("/", (req, res) => {
   res.send("Hello, TypeScript with Node.js Express!");
+});
+
+app.get("/users", (req, res)=> {
+  pool.query('SELECT * FROM users ORDER BY id ASC', (error: any, results: { rows: any; }) => {
+    if (error) {
+      throw error
+    }
+    res.status(200).json(results.rows)
+  })
+})
+
+app.post("/user", (request, response) => {
+  const { name, email } = request.body
+
+  pool.query('INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *', [name, email], (error: any, results: { rows: { id: any; }[]; }) => {
+    if (error) {
+      throw error
+    }
+    response.status(201).send(`User added with ID: ${results.rows[0].id}`)
+  })
 });
 
 app.get('/playground', expressPlayground({ endpoint: '/graphql' }))
